@@ -9,4 +9,9 @@ export default defineConfig({
   build: {
     target: 'esnext',
   },
+  server: {
+    hmr: {
+      overlay: false,
+    },
+  },
 });
