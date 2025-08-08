@@ -6,6 +6,7 @@ import { InputManager } from '../input/InputManager';
 import { PlayerController } from '../physics/PlayerController';
 import { ChunkManager } from '../world/ChunkManager';
 import { BlockId } from '../world/BlockId';
+import { debugState } from '../core/Debug';
 
 export type GameOptions = {
   container: HTMLElement;
@@ -56,6 +57,13 @@ export class Game {
         camera.rotation.set(this.player.pitch, this.player.yaw, 0, 'ZYX');
         this.chunks.updateAround(this.player.position);
         this.chunks.unloadFar(this.player.position);
+
+        // Debug updates
+        debugState.player.x = this.player.position.x;
+        debugState.player.y = this.player.position.y;
+        debugState.player.z = this.player.position.z;
+        debugState.player.yaw = this.player.yaw;
+        debugState.player.pitch = this.player.pitch;
       },
     });
 
