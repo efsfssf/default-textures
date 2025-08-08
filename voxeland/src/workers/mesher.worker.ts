@@ -19,6 +19,9 @@ export type MeshResponse = {
   uvs: ArrayBuffer;
   colors: ArrayBuffer;
   indices: ArrayBuffer;
+  // debug
+  solidBlocks: number;
+  faceCount: number;
 };
 
 const DIRS = [
@@ -99,6 +102,9 @@ function buildMesh(
     return voxels[idx(x, y, z)] as BlockId;
   };
 
+  let solidBlocks = 0;
+  let faceCount = 0;
+
   const pushFace = (face: number, x: number, y: number, z: number, tileIndex: number, lightness: number) => {
     const base = positions.length / 3;
     const verts = FACES[face];
@@ -120,6 +126,7 @@ function buildMesh(
       colors.push(lightness, lightness, lightness);
     }
     indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    faceCount++;
   };
 
   for (let y = 0; y < CHUNK_SIZE_Y; y++) {
@@ -127,6 +134,7 @@ function buildMesh(
       for (let x = 0; x < CHUNK_SIZE_X; x++) {
         const id = voxels[idx(x, y, z)] as BlockId;
         if (id === BlockId.Air) continue;
+        solidBlocks++;
         const def = BLOCKS[id];
         for (let f = 0; f < 6; f++) {
           const nx = x + DIRS[f].d[0];
@@ -149,6 +157,8 @@ function buildMesh(
     uvs: new Float32Array(uvs).buffer,
     colors: new Float32Array(colors).buffer,
     indices: new Uint32Array(indices).buffer,
+    solidBlocks,
+    faceCount,
   };
 }
 

@@ -5,6 +5,7 @@ import { computeSunlight } from './Lighting';
 import { BlockId } from './BlockId';
 import { putChunk, getChunk } from './SaveStore';
 import type { WorldId } from '../core/Types';
+import { debugState } from '../core/Debug';
 
 export type ChunkMeshData = {
   mesh: THREE.Mesh;
@@ -60,6 +61,7 @@ export class ChunkManager {
       this.chunks.set(k, chunk);
       this.requestMesh(chunk);
       this.updateLRU(k);
+      debugState.chunks.activeChunkCount = this.chunks.size;
       return;
     }
     // Request generation
@@ -71,14 +73,19 @@ export class ChunkManager {
     const k = this.key(cx, cz);
     const chunk = new Chunk(cx, cz);
     chunk.voxels.set(new Uint16Array(voxels));
+    // Put into map before computing light so intra-chunk queries work as expected
+    this.chunks.set(k, chunk);
     // compute sunlight
     const get = (x: number, y: number, z: number) => this.getBlock(x, y, z);
     computeSunlight(chunk, get);
-    this.chunks.set(k, chunk);
     this.updateLRU(k);
     // persist
     putChunk({ key: { worldId: this.opts.worldId, cx, cz }, voxels: chunk.voxels.buffer.slice(0), light: chunk.light.buffer.slice(0), version: 1 });
     this.requestMesh(chunk);
+    debugState.chunks.generated++;
+    debugState.chunks.lastGen = { cx, cz };
+    debugState.chunks.activeChunkCount = this.chunks.size;
+    console.debug('[generated]', { cx, cz });
   }
 
   private requestMesh(chunk: Chunk) {
@@ -91,7 +98,7 @@ export class ChunkManager {
     });
   }
 
-  private onMeshed(data: { cx: number; cz: number; positions: ArrayBuffer; normals: ArrayBuffer; uvs: ArrayBuffer; colors: ArrayBuffer; indices: ArrayBuffer }) {
+  private onMeshed(data: { cx: number; cz: number; positions: ArrayBuffer; normals: ArrayBuffer; uvs: ArrayBuffer; colors: ArrayBuffer; indices: ArrayBuffer; solidBlocks: number; faceCount: number }) {
     const { cx, cz } = data;
     const k = this.key(cx, cz);
     const positions = new Float32Array(data.positions);
@@ -121,6 +128,11 @@ export class ChunkManager {
 
     this.meshes.set(k, { mesh, bounds });
     this.opts.scene.add(mesh);
+    debugState.chunks.meshed++;
+    debugState.chunks.lastMesh = { cx, cz };
+    debugState.chunks.activeMeshCount = this.meshes.size;
+    // quick console for visibility when running dev
+    console.debug('[meshed]', { cx, cz, solidBlocks: data.solidBlocks, faceCount: data.faceCount });
   }
 
   unloadFar(center: THREE.Vector3) {
@@ -130,6 +142,7 @@ export class ChunkManager {
         this.unloadByKey(k);
       }
     }
+    debugState.chunks.activeMeshCount = this.meshes.size;
   }
 
   private unloadByKey(k: string) {
