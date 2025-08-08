@@ -1,0 +1,5 @@
+html, body, #root { height: 100%; }
+body { margin: 0; background: #0a1014; color: #e0f7fa; font-family: Inter, system-ui, Arial, sans-serif; }
+button, input { font-family: inherit; }
+button { cursor: pointer; padding: 8px 12px; border-radius: 6px; border: 1px solid #1b3b52; background: #134b5f; color: #e0f7fa; }
+input { padding: 8px 10px; border-radius: 6px; border: 1px solid #1b3b52; background: #0e2a3a; color: #e0f7fa; }
