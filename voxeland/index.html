@@ -5,6 +5,23 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + React + TS</title>
+    <script>
+      (function () {
+        var ce = window.customElements;
+        if (!ce || !ce.define || !ce.get) return;
+        var origDefine = ce.define.bind(ce);
+        ce.define = function (name, constructor, options) {
+          if (ce.get(name)) return; // Avoid duplicate registration
+          try {
+            origDefine(name, constructor, options);
+          } catch (err) {
+            var msg = String(err || '');
+            if (msg.indexOf('has already been defined') !== -1) return;
+            throw err;
+          }
+        };
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
